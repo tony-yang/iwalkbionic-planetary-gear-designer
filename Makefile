@@ -5,7 +5,7 @@ start:
 	docker run -itd --rm planetary-gear-designer bash
 
 stop:
-	docker container ls | grep planetary-gear-designer | awk '{print $$1}' | xargs docker container stop
+	docker container ls -a | grep planetary-gear-designer | awk '{print $$1}' | xargs docker container stop
 
 restart: stop start
 
