@@ -1,11 +1,11 @@
 .DEFAULT_GOAL := start
 
 start:
-	docker-compose build designer
-	docker-compose up -d
+	docker build -t planetary-gear-designer .
+	docker run -itd --rm planetary-gear-designer bash
 
 stop:
-	docker-compose down
+	docker container ls | grep planetary-gear-designer | awk '{print $$1}' | xargs docker container stop
 
 restart: stop start
 
