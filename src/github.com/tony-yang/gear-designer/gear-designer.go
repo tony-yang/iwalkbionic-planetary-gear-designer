@@ -69,6 +69,7 @@ func main() {
       planet1 := Gear{"Planet", 1, bore, facewidth, mod, planet1Teeth}
       planet1Diameter := GetGearDiameter(planet1)
       ring1 := GetRingGear(sun1, planet1)
+      numberOfPlanets := 4
 
 
       fmt.Println(sun1)
@@ -76,8 +77,8 @@ func main() {
       fmt.Println(ring1)
       fmt.Println(planet1Diameter)
 
-      mod2Start := mod - 0.3
-      mod2End := mod + 0.3
+      mod2Start := mod - 0.2
+      mod2End := mod + 0.2
 
       for mod2 := mod2Start; mod2 <= mod2End; mod2 = Round(mod2 + 0.01, 2) {
         fmt.Println("===============")
@@ -98,8 +99,16 @@ func main() {
         fmt.Println("Ring2 output", turnRing2Output)
         fmt.Println("Gain output", outputGain)
 
-        sun1Ring1ToPlanet := float64(sun1.Teeth + ring1.Teeth) / float64(4)
-        sun2Ring2ToPlanet := float64(sun2.Teeth + ring2.Teeth) / float64(4)
+        if sun1.Teeth >= 2 * planet1.Teeth {
+          numberOfPlanets = 9
+        } else if sun1.Teeth < 2 * planet1.Teeth && sun1.Teeth > planet1.Teeth {
+          numberOfPlanets = 6
+        } else if sun1.Teeth == planet1.Teeth {
+          numberOfPlanets = 5
+        }
+
+        sun1Ring1ToPlanet := float64(sun1.Teeth + ring1.Teeth) / float64(numberOfPlanets)
+        sun2Ring2ToPlanet := float64(sun2.Teeth + ring2.Teeth) / float64(numberOfPlanets)
 
         fmt.Println("Gearset 1 Teeth to Planet Count", sun1Ring1ToPlanet)
         fmt.Println("Gearset 2 Teeth to Planet Count", sun2Ring2ToPlanet)
@@ -109,7 +118,7 @@ func main() {
             sun1, planet1, ring1,
             sun2, planet2, ring2,
             outputGain,
-            4,
+            numberOfPlanets,
           }
           PotentialGearset = append(PotentialGearset, gearset)
         }
