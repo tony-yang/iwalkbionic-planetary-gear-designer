@@ -18,7 +18,7 @@ type Gearset struct {
 }
 
 func(g Gearset) String() string {
-  return fmt.Sprintf("Gearset:\n\t%v\n\t%v\n\t%v\n\t%v\n\t%v\n\t%v\n\t%v\n\t%v", g.Sun1, g.Planet1, g.Ring1, g.Sun2, g.Planet2, g.Ring2, g.Gain, g.NumberOfPlanets)
+  return fmt.Sprintf("Gearset:\n\t%v\n\t%v\n\t%v\n\t%v\n\t%v\n\t%v\n\tGain Ratio: %v\n\tNumber of Planets: %v", g.Sun1, g.Planet1, g.Ring1, g.Sun2, g.Planet2, g.Ring2, g.Gain, g.NumberOfPlanets)
 }
 
 type Gear struct {
@@ -63,13 +63,12 @@ func Round(n float64, precision int) float64 {
 }
 
 func main() {
-  fmt.Println("Hello")
-
   TeethSun1Start := flag.Int("sun1-start", 17, "The starting range of number of teeth for gear set #1 sun")
   TeethSun1End := flag.Int("sun1-end", 17, "The ending range of number of teeth for gear set #1 sun")
   TeethPlanet1Start := flag.Int("planet1-start", 20, "The starting range of number of teeth for gear set #1 planet")
   TeethPlanet1End := flag.Int("planet1-end", 20, "The ending range of number of teeth for gear set #1 planet")
   MinimumGain := flag.Int("min-gain", 500, "The minimum gear ratio desired")
+  MaximumGain := flag.Int("max-gain", 3000, "The maximum gear ratio desired")
 
   flag.Parse()
 
@@ -84,35 +83,20 @@ func main() {
       ring1 := GetRingGear(sun1, planet1)
       numberOfPlanets := 4
 
-
-      fmt.Println(sun1)
-      fmt.Println(planet1)
-      fmt.Println(ring1)
-      fmt.Println(planet1.PitchDiameter)
-
       mod2Start := mod - 0.2
       mod2End := mod + 0.2
 
       for mod2 := mod2Start; mod2 <= mod2End; mod2 = Round(mod2 + 0.01, 2) {
-        fmt.Println("===============")
-        fmt.Println("mod", mod2)
         planet2 := Gear{"Planet", 2, bore, facewidth, mod2, int(Round(planet1.PitchDiameter / mod2, 0)), planet1.PitchDiameter / mod2, 0.0}
         planet2.PitchDiameter = GetGearDiameter(planet2)
         sun2 := Gear{"Sun", 2, bore, facewidth, mod2, int(Round(sun1.PitchDiameter / mod2, 0)), sun1.PitchDiameter / mod2, 0.0}
         sun2.PitchDiameter = GetGearDiameter(sun2)
         ring2 := GetRingGear(sun2, planet2)
-        fmt.Println(sun2)
-        fmt.Println(planet2)
-        fmt.Println(ring2)
 
         turnSun1Input := (float64(ring1.Teeth) + float64(sun1.Teeth)) * float64(ring2.Teeth)
         turnRing2Output := float64(sun1.Teeth) * (float64(ring2.Teeth) - float64(ring1.Teeth)/float64(planet1.Teeth)*float64(planet2.Teeth))
 
         outputGain := turnSun1Input / turnRing2Output
-
-        fmt.Println("Sun1 input", turnSun1Input)
-        fmt.Println("Ring2 output", turnRing2Output)
-        fmt.Println("Gain output", outputGain)
 
         if sun1.Teeth >= 2 * planet1.Teeth {
           numberOfPlanets = 9
@@ -125,10 +109,7 @@ func main() {
         sun1Ring1ToPlanet := float64(sun1.Teeth + ring1.Teeth) / float64(numberOfPlanets)
         sun2Ring2ToPlanet := float64(sun2.Teeth + ring2.Teeth) / float64(numberOfPlanets)
 
-        fmt.Println("Gearset 1 Teeth to Planet Count", sun1Ring1ToPlanet)
-        fmt.Println("Gearset 2 Teeth to Planet Count", sun2Ring2ToPlanet)
-
-        if math.Abs(outputGain) > float64(*MinimumGain) && !math.IsInf(outputGain, 0) && sun1Ring1ToPlanet == float64(int(sun1Ring1ToPlanet)) && sun2Ring2ToPlanet == float64(int(sun2Ring2ToPlanet)) && TeethErrorInTolerance(sun2, planet2, ring2) {
+        if math.Abs(outputGain) > float64(*MinimumGain) && !math.IsInf(outputGain, 0) && math.Abs(outputGain) < float64(*MaximumGain) && sun1Ring1ToPlanet == float64(int(sun1Ring1ToPlanet)) && sun2Ring2ToPlanet == float64(int(sun2Ring2ToPlanet)) && TeethErrorInTolerance(sun2, planet2, ring2) {
           gearset := Gearset{
             sun1, planet1, ring1,
             sun2, planet2, ring2,
@@ -138,11 +119,10 @@ func main() {
           PotentialGearset = append(PotentialGearset, gearset)
         }
       }
-
-      fmt.Println("Final output potential gearset")
-      printPotentialGearset(PotentialGearset)
     }
   }
+  fmt.Println("Potential gearset")
+  printPotentialGearset(PotentialGearset)
 }
 
 func printPotentialGearset(g []Gearset) {
