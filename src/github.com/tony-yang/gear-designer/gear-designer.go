@@ -29,14 +29,15 @@ type Gear struct {
   Mod float64
   Teeth int
   ActualTeeth float64
+  PitchDiameter float64
 }
 
 func (g Gear) String() string {
-  return fmt.Sprintf("Gear %v%v: {Bore: %v, Facewidth: %v, Mod: %v, Teeth: %v, ActualTeeth: %v}", g.Name, g.Gearset, g.Bore, g.Facewidth, g.Mod, g.Teeth, g.ActualTeeth)
+  return fmt.Sprintf("Gear %v%v: {Bore: %v, Facewidth: %v, Mod: %v, Teeth: %v, ActualTeeth: %v, PitchDiameter: %v}", g.Name, g.Gearset, g.Bore, g.Facewidth, g.Mod, g.Teeth, g.ActualTeeth, g.PitchDiameter)
 }
 
 func GetRingGear(sun, planet Gear) Gear {
-  ring := Gear{"Ring", sun.Gearset, bore, facewidth, sun.Mod, sun.Teeth + planet.Teeth * 2, sun.ActualTeeth + planet.ActualTeeth * 2}
+  ring := Gear{"Ring", sun.Gearset, bore, facewidth, sun.Mod, sun.Teeth + planet.Teeth * 2, sun.ActualTeeth + planet.ActualTeeth * 2, sun.PitchDiameter + planet.PitchDiameter * 2}
   return ring
 }
 
@@ -76,10 +77,10 @@ func main() {
 
   for sun1Teeth := *TeethSun1Start; sun1Teeth <= *TeethSun1End; sun1Teeth++ {
     for planet1Teeth := *TeethPlanet1Start; planet1Teeth <= *TeethPlanet1End; planet1Teeth++ {
-      sun1 := Gear{"Sun", 1, bore, facewidth, mod, sun1Teeth, float64(sun1Teeth)}
-      sun1Diameter := GetGearDiameter(sun1)
-      planet1 := Gear{"Planet", 1, bore, facewidth, mod, planet1Teeth, float64(planet1Teeth)}
-      planet1Diameter := GetGearDiameter(planet1)
+      sun1 := Gear{"Sun", 1, bore, facewidth, mod, sun1Teeth, float64(sun1Teeth), 0.0}
+      sun1.PitchDiameter = GetGearDiameter(sun1)
+      planet1 := Gear{"Planet", 1, bore, facewidth, mod, planet1Teeth, float64(planet1Teeth), 0.0}
+      planet1.PitchDiameter = GetGearDiameter(planet1)
       ring1 := GetRingGear(sun1, planet1)
       numberOfPlanets := 4
 
@@ -87,7 +88,7 @@ func main() {
       fmt.Println(sun1)
       fmt.Println(planet1)
       fmt.Println(ring1)
-      fmt.Println(planet1Diameter)
+      fmt.Println(planet1.PitchDiameter)
 
       mod2Start := mod - 0.2
       mod2End := mod + 0.2
@@ -95,8 +96,10 @@ func main() {
       for mod2 := mod2Start; mod2 <= mod2End; mod2 = Round(mod2 + 0.01, 2) {
         fmt.Println("===============")
         fmt.Println("mod", mod2)
-        planet2 := Gear{"Planet", 2, bore, facewidth, mod2, int(Round(planet1Diameter / mod2, 0)), planet1Diameter / mod2}
-        sun2 := Gear{"Sun", 2, bore, facewidth, mod2, int(Round(sun1Diameter / mod2, 0)), sun1Diameter / mod2}
+        planet2 := Gear{"Planet", 2, bore, facewidth, mod2, int(Round(planet1.PitchDiameter / mod2, 0)), planet1.PitchDiameter / mod2, 0.0}
+        planet2.PitchDiameter = GetGearDiameter(planet2)
+        sun2 := Gear{"Sun", 2, bore, facewidth, mod2, int(Round(sun1.PitchDiameter / mod2, 0)), sun1.PitchDiameter / mod2, 0.0}
+        sun2.PitchDiameter = GetGearDiameter(sun2)
         ring2 := GetRingGear(sun2, planet2)
         fmt.Println(sun2)
         fmt.Println(planet2)
