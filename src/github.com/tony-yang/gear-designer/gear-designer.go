@@ -46,11 +46,11 @@ func GetGearDiameter(g Gear) float64 {
 }
 
 func TeethErrorInTolerance(sun Gear, planet Gear, ring Gear) bool {
-  if math.Abs(float64(sun.Teeth) - sun.ActualTeeth) > 0.1 {
+  if math.Abs(float64(sun.Teeth) - sun.ActualTeeth) > 0.11 {
     return false
-  } else if math.Abs(float64(planet.Teeth) - planet.ActualTeeth) > 0.1 {
+  } else if math.Abs(float64(planet.Teeth) - planet.ActualTeeth) > 0.11 {
     return false
-  } else if math.Abs(float64(ring.Teeth) - ring.ActualTeeth) > 0.1 {
+  } else if math.Abs(float64(ring.Teeth) - ring.ActualTeeth) > 0.11 {
     return false
   }
   return true
@@ -83,8 +83,8 @@ func main() {
       ring1 := GetRingGear(sun1, planet1)
       numberOfPlanets := 4
 
-      mod2Start := mod - 0.2
-      mod2End := mod + 0.2
+      mod2Start := mod - 0.5
+      mod2End := mod + 0.5
 
       for mod2 := mod2Start; mod2 <= mod2End; mod2 = Round(mod2 + 0.01, 2) {
         planet2 := Gear{"Planet", 2, bore, facewidth, mod2, int(Round(planet1.PitchDiameter / mod2, 0)), planet1.PitchDiameter / mod2, 0.0}
