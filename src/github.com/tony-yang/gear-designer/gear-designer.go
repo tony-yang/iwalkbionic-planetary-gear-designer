@@ -9,7 +9,7 @@ import (
 const bore float64 = 5.0
 const facewidth float64 = 8.0
 var standardMod = []float64{0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.25, 1.5, 1.75, 2}
-var planet2Variation = []int{0, 1, 2, 3, 4}
+var planet2Variation = []float64{-4.0, -3.0, -2.0, -1.0, 0.0, 1.0, 2.0, 3.0, 4.0}
 
 type Gearset struct {
   Sun1, Planet1, Ring1 Gear
@@ -70,6 +70,7 @@ func main() {
   TeethPlanet1End := flag.Int("planet1-end", 20, "The ending range of number of teeth for gear set #1 planet")
   MinimumGain := flag.Int("min-gain", 500, "The minimum gear ratio desired")
   MaximumGain := flag.Int("max-gain", 3000, "The maximum gear ratio desired")
+  MaximumRingDiameter := flag.Float64("max-ring-diameter", 80, "The mamimum Ring gear pitch diameter desired")
 
   flag.Parse()
 
@@ -83,43 +84,54 @@ func main() {
         planet1 := Gear{"Planet", 1, bore, facewidth, mod1, planet1Teeth, float64(planet1Teeth), 0.0}
         planet1.PitchDiameter = GetGearDiameter(planet1)
         ring1 := GetRingGear(sun1, planet1)
+
+        if ring1.PitchDiameter > *MaximumRingDiameter {
+          continue
+        }
+
         numberOfPlanets := 4
 
         for _, mod2 := range standardMod {
-          planet2 := Gear{"Planet", 2, bore, facewidth, mod2, int(Round(planet1.PitchDiameter / mod2, 0)), planet1.PitchDiameter / mod2, 0.0}
-          planet2.PitchDiameter = GetGearDiameter(planet2)
-          sun2 := Gear{"Sun", 2, bore, facewidth, mod2, int(Round(sun1.PitchDiameter / mod2, 0)), sun1.PitchDiameter / mod2, 0.0}
-          sun2.PitchDiameter = GetGearDiameter(sun2)
-          ring2 := GetRingGear(sun2, planet2)
+          for _, diameterVariation := range planet2Variation {
+            planet2PitchDiameter := planet1.PitchDiameter + diameterVariation
+            planet2 := Gear{"Planet", 2, bore, facewidth, mod2, int(Round(planet2PitchDiameter / mod2, 0)), planet2PitchDiameter / mod2, 0.0}
+            planet2.PitchDiameter = GetGearDiameter(planet2)
 
-          if planet2.Teeth < *TeethPlanet1Start || sun2.Teeth < *TeethSun1Start {
-            continue
-          }
+            sun2PitchDiameter := sun1.PitchDiameter - diameterVariation
+            sun2 := Gear{"Sun", 2, bore, facewidth, mod2, int(Round(sun2PitchDiameter / mod2, 0)), sun2PitchDiameter / mod2, 0.0}
+            sun2.PitchDiameter = GetGearDiameter(sun2)
 
-          turnSun1Input := (float64(ring1.Teeth) + float64(sun1.Teeth)) * float64(ring2.Teeth)
-          turnRing2Output := float64(sun1.Teeth) * (float64(ring2.Teeth) - float64(ring1.Teeth)/float64(planet1.Teeth)*float64(planet2.Teeth))
+            ring2 := GetRingGear(sun2, planet2)
 
-          outputGain := turnSun1Input / turnRing2Output
-
-          if sun1.Teeth >= 2 * planet1.Teeth {
-            numberOfPlanets = 9
-          } else if sun1.Teeth < 2 * planet1.Teeth && sun1.Teeth > planet1.Teeth {
-            numberOfPlanets = 6
-          } else if sun1.Teeth == planet1.Teeth {
-            numberOfPlanets = 5
-          }
-
-          sun1Ring1ToPlanet := float64(sun1.Teeth + ring1.Teeth) / float64(numberOfPlanets)
-          sun2Ring2ToPlanet := float64(sun2.Teeth + ring2.Teeth) / float64(numberOfPlanets)
-
-          if math.Abs(outputGain) > float64(*MinimumGain) && !math.IsInf(outputGain, 0) && math.Abs(outputGain) < float64(*MaximumGain) && sun1Ring1ToPlanet == float64(int(sun1Ring1ToPlanet)) && sun2Ring2ToPlanet == float64(int(sun2Ring2ToPlanet)) && TeethErrorTolerance(sun2, planet2, ring2) {
-            gearset := Gearset{
-              sun1, planet1, ring1,
-              sun2, planet2, ring2,
-              outputGain,
-              numberOfPlanets,
+            if planet2.Teeth < *TeethPlanet1Start || sun2.Teeth < *TeethSun1Start {
+              continue
             }
-            PotentialGearset = append(PotentialGearset, gearset)
+
+            turnSun1Input := (float64(ring1.Teeth) + float64(sun1.Teeth)) * float64(ring2.Teeth)
+            turnRing2Output := float64(sun1.Teeth) * (float64(ring2.Teeth) - float64(ring1.Teeth)/float64(planet1.Teeth)*float64(planet2.Teeth))
+
+            outputGain := turnSun1Input / turnRing2Output
+
+            if sun1.Teeth >= 2 * planet1.Teeth {
+              numberOfPlanets = 9
+            } else if sun1.Teeth < 2 * planet1.Teeth && sun1.Teeth > planet1.Teeth {
+              numberOfPlanets = 6
+            } else if sun1.Teeth == planet1.Teeth {
+              numberOfPlanets = 5
+            }
+
+            sun1Ring1ToPlanet := float64(sun1.Teeth + ring1.Teeth) / float64(numberOfPlanets)
+            sun2Ring2ToPlanet := float64(sun2.Teeth + ring2.Teeth) / float64(numberOfPlanets)
+
+            if math.Abs(outputGain) > float64(*MinimumGain) && !math.IsInf(outputGain, 0) && math.Abs(outputGain) < float64(*MaximumGain) && sun1Ring1ToPlanet == float64(int(sun1Ring1ToPlanet)) && sun2Ring2ToPlanet == float64(int(sun2Ring2ToPlanet)) && TeethErrorTolerance(sun2, planet2, ring2) {
+              gearset := Gearset{
+                sun1, planet1, ring1,
+                sun2, planet2, ring2,
+                outputGain,
+                numberOfPlanets,
+              }
+              PotentialGearset = append(PotentialGearset, gearset)
+            }
           }
         }
       }
