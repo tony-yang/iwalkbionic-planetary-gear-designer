@@ -8,8 +8,8 @@ import (
 
 const bore float64 = 5.0
 const facewidth float64 = 8.0
-var standardMod = []float64{0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.25, 1.5, 1.75, 2}
-var planet2Variation = []float64{-4.0, -3.0, -2.0, -1.0, 0.0, 1.0, 2.0, 3.0, 4.0}
+var standardMod = []float64{0.8, 1, 1.25, 1.5, 2, 2.5}
+var planet2Variation = []float64{-5.0, -4.0, -3.0, -2.0, -1.0, 0.0, 1.0, 2.0, 3.0, 4.0, 5.0}
 
 type Gearset struct {
   Sun1, Planet1, Ring1 Gear
